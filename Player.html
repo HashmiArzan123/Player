@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Classplus VideoPlayer</title>
+  <link rel="icon" type="image/jpeg" href="https://i.imgur.com/Z52wJgg.jpg">
+  <link rel="stylesheet" href="https://cdn.plyr.io/3.6.12/plyr.css" />
+  <link href="https://fonts.googleapis.com/css?family=Poppins|Quattrocento+Sans" rel="stylesheet" />
+  <script src="https://cdn.plyr.io/3.6.12/plyr.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js"></script>
+  <style>
+    html { font-family: Poppins; background: #000; margin: 0; padding: 0; }
+    .plyr { height: 100%; width: 100%; }
+    .loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; display: flex; justify-content: center; align-items: center; height: 100vh; }
+    .circle { width: 20px; height: 20px; margin: 10px; border-radius: 50%; animation: loader-animation 0.75s ease infinite; }
+    .circle:nth-child(1) { background-color: #D90429; animation-delay: 0s; }
+    .circle:nth-child(2) { background-color: #FFA300; animation-delay: 0.15s; }
+    .circle:nth-child(3) { background-color: #048BA8; animation-delay: 0.3s; }
+    @keyframes loader-animation { 0% { transform: scale(0); opacity: 0.7; } 100% { transform: scale(1); opacity: 0; } }
+  </style>
+</head>
+<body>
+  <div id="loading" class="loading">
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+  </div>
+
+  <video id="videoPlayer" controls crossorigin playsinline>
+    <source type="application/x-mpegURL">
+  </video>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const video = document.getElementById("videoPlayer");
+
+      // Function to get the URL parameter for the link
+      function getUrlParameter(name) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(name);
+      }
+
+      // Set the initial video link based on the 'Link' URL parameter
+      const videoLink = getUrlParameter("Link") || "https://appx1.arvind.eu.org/24013a143f4f614b22142f1e2d162f00291837053c1c600527142305255b2001385b270a611621113e062b3b251173567e53380d2810213b251173507b437642350128082d1273546a13210828103c3b3b1c3d01131621113e062b597d533a0b27102059380734232720183e030d7f227527760c191c38342f34015c241e060575051e21/main.m3u8";
+
+      const options = {};
+      if (Hls.isSupported()) {
+        const hlsConfig = { maxMaxBufferLength: 100 };
+        const hls = new Hls(hlsConfig);
+        hls.loadSource(videoLink);
+        hls.attachMedia(video);
+        hls.on(Hls.Events.MANIFEST_PARSED, function() {
+          const levels = hls.levels.map(level => level.height);
+          options.quality = {
+            default: levels[0],
+            options: levels,
+            forced: true,
+            onChange: (selected) => {
+              hls.levels.forEach((level, i) => {
+                if (level.height === selected) {
+                  hls.currentLevel = i;
+                }
+              });
+            }
+          };
+          options.previewThumbnails = {
+            enabled: true,
+            src: videoLink
+          };
+          options.speed = {
+            selected: 1,
+            options: [1, 1.25, 1.5, 2, 2.25, 2.5, 3, 3.5, 4],
+          };
+          const loadingElement = document.getElementById("loading");
+          loadingElement.style.display = "none";
+          new Plyr(video, options);
+        });
+      } else {
+        video.src = videoLink;
+        options.speed = {
+          selected: 1,
+          options: [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4],
+        };
+        const loadingElement = document.getElementById("loading");
+        loadingElement.style.display = "none";
+        new Plyr(video, options);
+      }
+    });
+  </script>
+</body>
+</html>
